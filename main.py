@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, BackgroundTasks
 from fastapi.templating import Jinja2Templates
 import models
 from database import SessionLocal, engine
@@ -31,9 +31,20 @@ def home(request: Request):
         "request": request,
     })
 
+def fetch_stock_data(id: int):
+    db = SessionLocal()
+    stock = db.query(Stock).filter(Stock.id == id).first()
+
+    from time import sleep
+    sleep(10)
+
+    stock.forward_pe = 10
+
+    db.add(stock)
+    db.commit()
 
 @app.post("/stock")
-def create_stock(stock_request: StockRequest, db: Session = Depends(get_db)):
+async def create_stock(stock_request: StockRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     '''
     create a stock and store it in the database
     '''
@@ -43,6 +54,8 @@ def create_stock(stock_request: StockRequest, db: Session = Depends(get_db)):
 
     db.add(stock)
     db.commit()
+
+    background_tasks.add_task(fetch_stock_data, stock.id)
 
     return {
         "code": "success",
