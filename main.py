@@ -32,6 +32,7 @@ def home(request: Request):
         "request": request,
     })
 
+
 def fetch_stock_data(id: int):
     db = SessionLocal()
     stock = db.query(Stock).filter(Stock.id == id).first()
@@ -47,6 +48,7 @@ def fetch_stock_data(id: int):
 
     db.add(stock)
     db.commit()
+
 
 @app.post("/stock")
 async def create_stock(stock_request: StockRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
